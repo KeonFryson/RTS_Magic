@@ -8,5 +8,9 @@ public class BiomeData : ScriptableObject
     public TileBase tile;
     public Color previewColor;
     [Range(0f, 1f)]
-    public float rarity = 0.5f; // 0 = never, 1 = always, adjust in Inspector
+    public float rarity = 0.5f;
+
+    // Biome-specific prefabs
+    public GameObject[] treePrefabs;
+    public GameObject[] rockPrefabs;
 }

@@ -1231,6 +1231,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1573536913}
   - component: {fileID: 1573536912}
+  - component: {fileID: 1573536914}
   m_Layer: 0
   m_Name: WorldGen
   m_TagString: Untagged
@@ -1262,8 +1263,8 @@ MonoBehaviour:
   height: 100
   waterLevel: 0.4
   deepWaterLevel: 0.2
-  seed: 0
-  useRandomSeed: 1
+  seed: 935658989
+  useRandomSeed: 0
   playerCoordsText: {fileID: 786325739}
   voronoiSiteCount: 200
 --- !u!4 &1573536913
@@ -1282,6 +1283,28 @@ Transform:
   - {fileID: 2118536473}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1573536914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1573536911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d463eda6f38451a44bd449f6e53bcbab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BiomeObjectSpawner
+  width: 50
+  height: 50
+  treeNoiseScale: 0.1
+  rockNoiseScale: 0.15
+  treeThreshold: 0.6
+  rockThreshold: 0.9
+  minTreeSpacing: 3
+  playerTransform: {fileID: 0}
+  lastPlayerTilePos: {x: 0, y: 0}
+  spawnUpdateThreshold: 2
 --- !u!1001 &1643459955
 PrefabInstance:
   m_ObjectHideFlags: 0

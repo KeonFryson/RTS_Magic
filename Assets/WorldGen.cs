@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Tilemaps;
@@ -9,15 +11,16 @@ using UnityEngine.Tilemaps;
 public class WorldGen : MonoBehaviour
 {
     public static WorldGen Instance { get; private set; }
+    public event Action<Vector2Int> OnChunkVisibilityChanged;
 
     [Header("Tilemap Setup")]
-    public Tilemap tilemap; // Land tilemap
-    public Tilemap oceanTilemap; // Add this for oceans
+    public Tilemap tilemap;
+    public Tilemap oceanTilemap;
     public TileBase oceanTile;
     public TileBase deepOceanTile;
 
     [Header("Biome Setup")]
-    public List<BiomeData> biomes; // Assign BiomeData assets in Inspector
+    public List<BiomeData> biomes;
 
     [Header("Noise Visualization")]
     public SpriteRenderer noiseRenderer;
@@ -25,8 +28,8 @@ public class WorldGen : MonoBehaviour
     [Header("World Settings")]
     public int width = 50;
     public int height = 50;
-    public float waterLevel = 5;
-    public float deepWaterLevel = 8;
+    public float waterLevel = 5f;
+    public float deepWaterLevel = 3f;
 
     [Header("Random Seed")]
     public int seed = 0;
@@ -36,7 +39,7 @@ public class WorldGen : MonoBehaviour
     private float offsetX2, offsetY2, scale2 = 0.01f;
     private float offsetX3, offsetY3, scale3 = 0.02f;
 
-    private bool showNoise = false;
+    public bool showNoise = false;
     private Texture2D noiseTexture;
 
     private Transform playerTransform;
@@ -45,13 +48,15 @@ public class WorldGen : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private TMP_Text playerCoordsText;
+    [SerializeField] private GameObject loadingPanel;
 
     [Header("Voronoi Settings")]
     [SerializeField] private int voronoiSiteCount = 100;
 
     private List<VoronoiSite> voronoiSites;
+    public List<VoronoiSite> VoronoiSites => voronoiSites;
 
-    private struct VoronoiSite
+    public struct VoronoiSite
     {
         public Vector2 position;
         public BiomeData biome;
@@ -59,7 +64,6 @@ public class WorldGen : MonoBehaviour
 
     private const int chunkSize = 16;
     private Dictionary<Vector2Int, object[,]> chunkCache = new Dictionary<Vector2Int, object[,]>();
-
     private Queue<Vector2Int> chunkGenQueue = new Queue<Vector2Int>();
     private HashSet<Vector2Int> chunkGenPending = new HashSet<Vector2Int>();
     private bool isChunkGenRunning = false;
@@ -77,99 +81,97 @@ public class WorldGen : MonoBehaviour
 
     private void Start()
     {
-        if (useRandomSeed)
-        {
-            seed = Random.Range(int.MinValue, int.MaxValue);
-        }
-        Random.InitState(seed);
+        StartCoroutine(LoadingPanel(true,true));
 
-        offsetX = Random.Range(0f, 1000f);
-        offsetY = Random.Range(0f, 1000f);
-        offsetX2 = Random.Range(0f, 1000f);
-        offsetY2 = Random.Range(0f, 1000f);
-        offsetX3 = Random.Range(0f, 1000f);
-        offsetY3 = Random.Range(0f, 1000f);
+
+        if (useRandomSeed)
+            seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+
+        UnityEngine.Random.InitState(seed);
+
+        offsetX = UnityEngine.Random.Range(0f, 1000f);
+        offsetY = UnityEngine.Random.Range(0f, 1000f);
+        offsetX2 = UnityEngine.Random.Range(0f, 1000f);
+        offsetY2 = UnityEngine.Random.Range(0f, 1000f);
+        offsetX3 = UnityEngine.Random.Range(0f, 1000f);
+        offsetY3 = UnityEngine.Random.Range(0f, 1000f);
 
         GenerateVoronoiSites();
+
+        lastPlayerTilePos = GetPlayerTilePosition() + Vector2Int.one * 9999;
+        UpdateWorldAroundPlayer();
+
+        StartCoroutine(SpawnPlayerAfterWorldReady());
+    }
+ 
+    private IEnumerator SpawnPlayerAfterWorldReady()
+    {
+        while (isChunkGenRunning)
+            yield return null;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
         {
             playerTransform = playerObj.transform;
-            // Set player spawn position
             Vector2 spawnPos = FindLandSpawnPosition();
             playerTransform.position = new Vector3(spawnPos.x, spawnPos.y, playerTransform.position.z);
         }
-        else
-        {
-            Debug.LogWarning("Player object with tag 'Player' not found.");
-        }
 
-        lastPlayerTilePos = GetPlayerTilePosition() + Vector2Int.one * 9999;
-        UpdateWorldAroundPlayer();
+
+        StartCoroutine(LoadingPanel(false,false));
+
+
     }
 
-    // Add this method to WorldGen
+    private IEnumerator LoadingPanel(bool show,bool IsStartofGame)
+    {
+        
+        while (!IsStartofGame)
+        {
+            Debug.Log("World generation complete. Spawning player...");
+            yield return new WaitForSeconds(0.8f); // Simulate loading time
+            IsStartofGame = true;
+
+        }
+
+       
+        if (loadingPanel != null)
+        {
+            Debug.Log(show ? "Showing loading panel..." : "Hiding loading panel...");
+            loadingPanel.SetActive(show);
+            Player2DMovement.Instance.enabled = !show;  
+        }
+    }
+
+    private float GetCombinedNoise(int worldX, int worldY)
+    {
+        float noise1 = Mathf.PerlinNoise(worldX * scale + offsetX, worldY * scale + offsetY);
+        float noise2 = Mathf.PerlinNoise(worldX * scale2 + offsetX2, worldY * scale2 + offsetY2);
+        float noise3 = Mathf.PerlinNoise(worldX * scale3 + offsetX3, worldY * scale3 + offsetY3);
+        return noise1 * 0.5f + noise2 * 0.3f + noise3 * 0.2f;
+    }
+
     private Vector2 FindLandSpawnPosition()
     {
-        const int maxAttempts = 1000;
-        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        for (int i = 0; i < 1000; i++)
         {
-            float angle = Random.Range(0f, Mathf.PI * 2f);
-            float radius = Random.Range(0f, 100f);
-            float x = Mathf.Cos(angle) * radius;
-            float y = Mathf.Sin(angle) * radius;
+            float x = UnityEngine.Random.Range(-100f, 100f);
+            float y = UnityEngine.Random.Range(-100f, 100f);
 
-            // Use your noise logic to determine if this is land
-            float nx1 = x * scale + offsetX;
-            float ny1 = y * scale + offsetY;
-            float noise1 = Mathf.PerlinNoise(nx1, ny1);
-
-            float nx2 = x * scale2 + offsetX2;
-            float ny2 = y * scale2 + offsetY2;
-            float noise2 = Mathf.PerlinNoise(nx2, ny2);
-
-            float nx3 = x * scale3 + offsetX3;
-            float ny3 = y * scale3 + offsetY3;
-            float noise3 = Mathf.PerlinNoise(nx3, ny3);
-
-            float noise = (noise1 * 0.5f + noise2 * 0.3f + noise3 * 0.2f);
-
-            if (noise >= waterLevel) // Land
-            {
+            if (IsLand(new Vector2(x, y)))
                 return new Vector2(x, y);
-            }
         }
-        // Fallback: just use (0,0) if no land found
-        Debug.LogWarning("Could not find land spawn position, using (0,0)");
         return Vector2.zero;
     }
 
-
-
     void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
-        {
-            showNoise = !showNoise;
-            if (showNoise)
-            {
-                DrawBiomeTexture(GetPlayerTilePosition());
-                Debug.Log("Switched to biome visualization");
-            }
-            else
-            {
-                DrawNoiseTexture(GetPlayerTilePosition());
-                Debug.Log("Switched to noise visualization");
-            }
-
-            UpdateVisualization();
-        }
-
         Vector2Int playerTilePos = GetPlayerTilePosition();
+
         if (playerTilePos != lastPlayerTilePos)
         {
             UpdateWorldAroundPlayer();
+            OnChunkVisibilityChanged?.Invoke(playerTilePos);
         }
 
         if (chunksDirty)
@@ -177,12 +179,18 @@ public class WorldGen : MonoBehaviour
             DrawChunksAroundPlayer(lastPlayerTilePos);
             chunksDirty = false;
         }
+
+        if (showNoise && noiseRenderer != null)
+        {
+            DrawBiomeTexture(GetPlayerTilePosition());
+        }
     }
 
-    Vector2Int GetPlayerTilePosition()
+    public Vector2Int GetPlayerTilePosition()
     {
         if (playerTransform == null)
             return Vector2Int.zero;
+
         Vector3 pos = playerTransform.position;
         return new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
     }
@@ -192,20 +200,14 @@ public class WorldGen : MonoBehaviour
         Vector2Int playerTilePos = GetPlayerTilePosition();
         lastPlayerTilePos = playerTilePos;
         DrawChunksAroundPlayer(playerTilePos);
-        DrawNoiseTexture(playerTilePos);
-        UpdateVisualization();
 
         if (playerCoordsText != null)
-        {
             playerCoordsText.text = $"Player: ({playerTilePos.x}, {playerTilePos.y})";
-        }
     }
 
     void GenerateVoronoiSites()
     {
         voronoiSites = new List<VoronoiSite>();
-
-        // Normalize rarities
         float totalRarity = 0f;
         foreach (var biome in biomes)
             totalRarity += biome.rarity;
@@ -213,13 +215,14 @@ public class WorldGen : MonoBehaviour
         for (int i = 0; i < voronoiSiteCount; i++)
         {
             Vector2 pos = new Vector2(
-                Random.Range(-1000f, 1000f),
-                Random.Range(-1000f, 1000f)
+                UnityEngine.Random.Range(-1000f, 1000f),
+                UnityEngine.Random.Range(-1000f, 1000f)
             );
 
-            float roll = Random.value;
+            float roll = UnityEngine.Random.value;
             float cumulative = 0f;
             BiomeData selectedBiome = null;
+
             foreach (var biome in biomes)
             {
                 cumulative += biome.rarity / totalRarity;
@@ -229,7 +232,7 @@ public class WorldGen : MonoBehaviour
                     break;
                 }
             }
-            // Fallback if none selected
+
             if (selectedBiome == null && biomes.Count > 0)
                 selectedBiome = biomes[biomes.Count - 1];
 
@@ -237,100 +240,31 @@ public class WorldGen : MonoBehaviour
         }
     }
 
-    void GenerateChunkAsync(Vector2Int chunkCoord)
+    public bool IsLand(Vector2 worldPos)
     {
-        if (chunkCache.ContainsKey(chunkCoord) || chunkGenPending.Contains(chunkCoord))
-            return;
-
-        chunkGenPending.Add(chunkCoord);
-        chunkGenQueue.Enqueue(chunkCoord);
-        if (!isChunkGenRunning)
-            StartCoroutine(ProcessChunkGenQueue());
+        return GetCombinedNoise((int)worldPos.x, (int)worldPos.y) >= waterLevel;
     }
 
-    IEnumerator ProcessChunkGenQueue()
-    {
-        isChunkGenRunning = true;
-        while (chunkGenQueue.Count > 0)
-        {
-            Vector2Int chunkCoord = chunkGenQueue.Dequeue();
-            object[,] chunkGrid = null;
-            var task = Task.Run(() =>
-            {
-                chunkGrid = GenerateChunkData(chunkCoord);
-            });
-
-            while (!task.IsCompleted)
-                yield return null;
-
-            chunkCache[chunkCoord] = chunkGrid;
-            chunkGenPending.Remove(chunkCoord);
-            chunksDirty = true;
-        }
-        isChunkGenRunning = false;
-    }
-
-    private object[,] GenerateChunkData(Vector2Int chunkCoord)
-    {
-        object[,] chunkGrid = new object[chunkSize, chunkSize];
-        int worldX0 = chunkCoord.x * chunkSize;
-        int worldY0 = chunkCoord.y * chunkSize;
-
-        for (int x = 0; x < chunkSize; x++)
-        {
-            for (int y = 0; y < chunkSize; y++)
-            {
-                int worldX = worldX0 + x;
-                int worldY = worldY0 + y;
-
-                float nx1 = worldX * scale + offsetX;
-                float ny1 = worldY * scale + offsetY;
-                float noise1 = Mathf.PerlinNoise(nx1, ny1);
-
-                float nx2 = worldX * scale2 + offsetX2;
-                float ny2 = worldY * scale2 + offsetY2;
-                float noise2 = Mathf.PerlinNoise(nx2, ny2);
-
-                float nx3 = worldX * scale3 + offsetX3;
-                float ny3 = worldY * scale3 + offsetY3;
-                float noise3 = Mathf.PerlinNoise(nx3, ny3);
-
-                float noise = (noise1 * 0.5f + noise2 * 0.3f + noise3 * 0.2f);
-
-                // Only assign Voronoi biomes to land tiles
-                if (noise < deepWaterLevel)
-                {
-                    chunkGrid[x, y] = deepOceanTile;
-                }
-                else if (noise < waterLevel)
-                {
-                    chunkGrid[x, y] = oceanTile;
-                }
-                else
-                {
-                    Vector2 tilePos = new Vector2(worldX, worldY);
-                    BiomeData landBiome = GetVoronoiBiome(tilePos);
-                    chunkGrid[x, y] = landBiome;
-                }
-            }
-        }
-        return chunkGrid;
-    }
-
-    BiomeData GetVoronoiBiome(Vector2 tilePos)
+    public BiomeData GetVoronoiBiome(Vector2 tilePos)
     {
         float minDist = float.MaxValue;
-        BiomeData closestBiome = biomes.Count > 0 ? biomes[0] : null;
+        BiomeData closest = null;
+
         foreach (var site in voronoiSites)
         {
             float dist = Vector2.SqrMagnitude(tilePos - site.position);
             if (dist < minDist)
             {
                 minDist = dist;
-                closestBiome = site.biome;
+                closest = site.biome;
             }
         }
-        return closestBiome;
+        return closest;
+    }
+    public bool IsLandTile(Vector2Int tilePos)
+    {
+        Vector3Int pos = new Vector3Int(tilePos.x, tilePos.y, 0);
+        return tilemap.GetTile(pos) != null;
     }
 
     void DrawChunksAroundPlayer(Vector2Int playerTilePos)
@@ -341,7 +275,6 @@ public class WorldGen : MonoBehaviour
         );
 
         int chunkRadius = Mathf.CeilToInt((float)width / chunkSize / 2);
-
         var newDrawnTiles = new HashSet<Vector3Int>();
 
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++)
@@ -350,10 +283,11 @@ public class WorldGen : MonoBehaviour
             {
                 Vector2Int chunkCoord = playerChunk + new Vector2Int(dx, dy);
                 GenerateChunkAsync(chunkCoord);
-                if (!chunkCache.ContainsKey(chunkCoord)) continue;
+
+                if (!chunkCache.ContainsKey(chunkCoord))
+                    continue;
 
                 object[,] chunkGrid = chunkCache[chunkCoord];
-
                 int worldX0 = chunkCoord.x * chunkSize;
                 int worldY0 = chunkCoord.y * chunkSize;
 
@@ -370,28 +304,17 @@ public class WorldGen : MonoBehaviour
                         TileBase oceanTileToSet = null;
 
                         if (chunkGrid[x, y] is TileBase waterTile)
-                        {
-                            // Place water on oceanTilemap, clear from land tilemap
                             oceanTileToSet = waterTile;
-                        }
                         else if (chunkGrid[x, y] is BiomeData biomeData)
-                        {
-                            // Place land on land tilemap, clear from ocean tilemap
                             landTile = biomeData.tile;
-                        }
 
-                        // Set tiles
-                        if (!drawnTiles.Contains(pos) || tilemap.GetTile(pos) != landTile)
-                            tilemap.SetTile(pos, landTile);
-
-                        if (!drawnTiles.Contains(pos) || oceanTilemap.GetTile(pos) != oceanTileToSet)
-                            oceanTilemap.SetTile(pos, oceanTileToSet);
+                        tilemap.SetTile(pos, landTile);
+                        oceanTilemap.SetTile(pos, oceanTileToSet);
                     }
                 }
             }
         }
 
-        // Remove tiles that are no longer in the visible area
         foreach (var oldPos in drawnTiles)
         {
             if (!newDrawnTiles.Contains(oldPos))
@@ -400,8 +323,72 @@ public class WorldGen : MonoBehaviour
                 oceanTilemap.SetTile(oldPos, null);
             }
         }
+
         drawnTiles = newDrawnTiles;
     }
+
+    void GenerateChunkAsync(Vector2Int chunkCoord)
+    {
+        if (chunkCache.ContainsKey(chunkCoord) || chunkGenPending.Contains(chunkCoord))
+            return;
+
+        chunkGenPending.Add(chunkCoord);
+        chunkGenQueue.Enqueue(chunkCoord);
+        if (!isChunkGenRunning)
+            StartCoroutine(ProcessChunkGenQueue());
+    }
+
+    IEnumerator ProcessChunkGenQueue()
+    {
+        isChunkGenRunning = true;
+
+        while (chunkGenQueue.Count > 0)
+        {
+            Vector2Int chunkCoord = chunkGenQueue.Dequeue();
+            object[,] chunkGrid = null;
+
+            var task = Task.Run(() =>
+            {
+                chunkGrid = GenerateChunkData(chunkCoord);
+            });
+
+            while (!task.IsCompleted)
+                yield return null;
+
+            chunkCache[chunkCoord] = chunkGrid;
+            chunkGenPending.Remove(chunkCoord);
+            chunksDirty = true;
+        }
+
+        isChunkGenRunning = false;
+    }
+
+    private object[,] GenerateChunkData(Vector2Int chunkCoord)
+    {
+        object[,] chunkGrid = new object[chunkSize, chunkSize];
+        int worldX0 = chunkCoord.x * chunkSize;
+        int worldY0 = chunkCoord.y * chunkSize;
+
+        for (int x = 0; x < chunkSize; x++)
+        {
+            for (int y = 0; y < chunkSize; y++)
+            {
+                int worldX = worldX0 + x;
+                int worldY = worldY0 + y;
+                float noise = GetCombinedNoise(worldX, worldY);
+
+                if (noise < deepWaterLevel)
+                    chunkGrid[x, y] = deepOceanTile;
+                else if (noise < waterLevel)
+                    chunkGrid[x, y] = oceanTile;
+                else
+                    chunkGrid[x, y] = GetVoronoiBiome(new Vector2(worldX, worldY));
+            }
+        }
+
+        return chunkGrid;
+    }
+
 
     void DrawNoiseTexture(Vector2Int center)
     {
@@ -585,4 +572,5 @@ public class WorldGen : MonoBehaviour
         }
         return closestIndex;
     }
+
 }

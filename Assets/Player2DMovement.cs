@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Player2DMovement : MonoBehaviour
 {
+    public static Player2DMovement Instance { get; private set; }
     [SerializeField] private float moveSpeed = 5f;
     private float defaultMoveSpeed;
     private InputSystem_Actions inputActions;
@@ -12,6 +13,12 @@ public class Player2DMovement : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
         rb = GetComponent<Rigidbody2D>();
         if (rb == null)
         {

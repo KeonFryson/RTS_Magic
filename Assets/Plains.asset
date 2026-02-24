@@ -16,3 +16,7 @@ MonoBehaviour:
   tile: {fileID: 11400000, guid: de52cc7f40bf20a4ab56967cb3366c12, type: 2}
   previewColor: {r: 0.20784315, g: 0.427451, b: 0, a: 0}
   rarity: 0.8
+  treePrefabs:
+  - {fileID: 100903406294048173, guid: aebdb5d5fdfc70a4590b17e25dc68f71, type: 3}
+  rockPrefabs:
+  - {fileID: 8133484640492438484, guid: f1c285741d8bb8f449de80f82b250d58, type: 3}
