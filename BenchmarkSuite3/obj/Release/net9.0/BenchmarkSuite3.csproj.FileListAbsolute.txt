@@ -1,0 +1,6 @@
+C:\Users\Admin\OneDrive\Documents\GitHub\RTS_Magic\BenchmarkSuite3\obj\Release\net9.0\BenchmarkSuite3.csproj.AssemblyReference.cache
+C:\Users\Admin\OneDrive\Documents\GitHub\RTS_Magic\BenchmarkSuite3\obj\Release\net9.0\BenchmarkSuite3.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Admin\OneDrive\Documents\GitHub\RTS_Magic\BenchmarkSuite3\obj\Release\net9.0\BenchmarkSuite3.AssemblyInfoInputs.cache
+C:\Users\Admin\OneDrive\Documents\GitHub\RTS_Magic\BenchmarkSuite3\obj\Release\net9.0\BenchmarkSuite3.AssemblyInfo.cs
+C:\Users\Admin\OneDrive\Documents\GitHub\RTS_Magic\BenchmarkSuite3\obj\Release\net9.0\BenchmarkSuite3.csproj.CoreCompileInputs.cache
+C:\Users\Admin\OneDrive\Documents\GitHub\RTS_Magic\BenchmarkSuite3\obj\Release\net9.0\BenchmarkSuite3.sourcelink.json
