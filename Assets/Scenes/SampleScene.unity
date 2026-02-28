@@ -727,6 +727,68 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &760215993
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 760215994}
+  - component: {fileID: 760215995}
+  m_Layer: 5
+  m_Name: Slots
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &760215994
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760215993}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 314724908}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 30}
+  m_SizeDelta: {x: 1000, y: 200}
+  m_Pivot: {x: 0.5, y: 0}
+--- !u!114 &760215995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760215993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 10
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &786325737
 GameObject:
   m_ObjectHideFlags: 0
@@ -1154,7 +1216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f77315245eff843448cfb6311a73ce72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Inventory
-  maxItems: 10
+  maxItems: 5
   items: []
   TestItem: []
 --- !u!114 &1572592486
@@ -1170,7 +1232,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInputs
   Damage: 1
-  Range: 3
+  Range: 4
+  ConeAngle: 50
 --- !u!1 &1573536911
 GameObject:
   m_ObjectHideFlags: 0
@@ -1348,6 +1411,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Inventory
       objectReference: {fileID: 0}
+    - target: {fileID: 4545388207958611698, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
+      propertyPath: m_UiScaleMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4545388207958611698, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
+      propertyPath: m_MatchWidthOrHeight
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4545388207958611698, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
+      propertyPath: m_ReferenceResolution.x
+      value: 1920
+      objectReference: {fileID: 0}
+    - target: {fileID: 4545388207958611698, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
+      propertyPath: m_ReferenceResolution.y
+      value: 1080
+      objectReference: {fileID: 0}
     - target: {fileID: 5533349423517437664, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -1428,9 +1507,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 7028674290216414210, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
+      propertyPath: SlotsParent
+      value: 
+      objectReference: {fileID: 760215993}
+    m_RemovedComponents:
+    - {fileID: 5773565103116796717, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 5533349423517437664, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 760215994}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cc9b094db961f3d4795eac2fb74c2ca9, type: 3}
 --- !u!1 &2005395609
@@ -1533,6 +1620,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2031198982}
+  - component: {fileID: 2031198983}
   m_Layer: 0
   m_Name: GameManger
   m_TagString: Untagged
@@ -1555,6 +1643,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2031198983
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2031198981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526557e8d6d7777418ab22989a6f4778, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
 --- !u!1 &2106708058 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4036219784004673840, guid: 19da3f8ff1f555e488bb7c7e182327a6, type: 3}

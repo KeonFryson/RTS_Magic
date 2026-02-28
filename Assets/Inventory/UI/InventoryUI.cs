@@ -9,29 +9,30 @@ public class InventoryUI : MonoBehaviour
     private int selectedItem = 0;
     [SerializeField] private Outline[] itemOutlineSlots;
     [SerializeField] private GameObject[] itemSlotObjects;
+    [SerializeField] public GameObject SlotsParent;
 
 
-     
     void Start()
     {
-
         itemSlotObjects = new GameObject[Inventory.Instance.MaxItems];
         for (int i = 0; i < Inventory.Instance.MaxItems; i++)
         {
-            GameObject slot = Instantiate(itemSlotPrefab, transform);
+            GameObject slot = Instantiate(itemSlotPrefab, SlotsParent.transform);
+          
             slot.name = $"ItemSlot_{i}";
             itemSlotObjects[i] = slot;
         }
 
-
         itemOutlineSlots = GetComponentsInChildren<Outline>();
         itemOutlineSlots[selectedItem].enabled = true;
 
-
         Inventory.Instance.OnInventoryChanged += UpdateInventoryUI;
+
+        // Force initial UI update to reflect loaded inventory
+        UpdateInventoryUI();
     }
 
-   
+
     void Update()
     {
         float scroll = Mouse.current.scroll.ReadValue().y;
@@ -52,8 +53,6 @@ public class InventoryUI : MonoBehaviour
             if (selectedItem >= 0 && selectedItem < itemOutlineSlots.Length)
                 itemOutlineSlots[selectedItem].enabled = true;
         }
-
-        
     }
 
 

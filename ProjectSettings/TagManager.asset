@@ -41,14 +41,14 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Layer 3
-    uniqueID: 2721506677
+  - name: Layer 1
+    uniqueID: 1133927573
     locked: 0
   - name: Layer 2
     uniqueID: 3486058547
     locked: 0
-  - name: Layer 1
-    uniqueID: 1133927573
+  - name: Layer 3
+    uniqueID: 2721506677
     locked: 0
   m_RenderingLayers:
   - Default

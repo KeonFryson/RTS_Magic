@@ -372,7 +372,7 @@ public class WorldGen : MonoBehaviour
         foreach (var pos in drawnTiles)
         {
             Vector2Int tilePos = new Vector2Int(pos.x, pos.y);
-            if (DestroyedResourceNodesManager.IsDestroyed(tilePos))
+            if (SaveManager.IsResourceNodeDestroyed(tilePos))
                 continue;
 
             if (spawnedForests.ContainsKey(tilePos))
@@ -726,40 +726,40 @@ public class WorldGen : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        return; 
+         
 
-        if (tilemap == null)
-            return;
+        //if (tilemap == null)
+        //    return;
 
-        Gizmos.color = Color.green;
-        int minX = -width / 2;
-        int maxX = width / 2;
-        int minY = -height / 2;
-        int maxY = height / 2;
+        //Gizmos.color = Color.green;
+        //int minX = -width / 2;
+        //int maxX = width / 2;
+        //int minY = -height / 2;
+        //int maxY = height / 2;
 
-        for (int x = minX; x < maxX; x++)
-        {
-            for (int y = minY; y < maxY; y++)
-            {
-                Vector2Int tilePos = new Vector2Int(x, y);
-                if (IsLandTile(tilePos))
-                {
-                    Vector3Int cellPos = new Vector3Int(x, y, 0);
-                    Vector3 worldPos = tilemap.CellToWorld(cellPos) + new Vector3(0.5f, 0.5f, 0f);
-                    Gizmos.DrawWireCube(worldPos, Vector3.one * 0.95f);
-                }
-            }
-        }
+        //for (int x = minX; x < maxX; x++)
+        //{
+        //    for (int y = minY; y < maxY; y++)
+        //    {
+        //        Vector2Int tilePos = new Vector2Int(x, y);
+        //        if (IsLandTile(tilePos))
+        //        {
+        //            Vector3Int cellPos = new Vector3Int(x, y, 0);
+        //            Vector3 worldPos = tilemap.CellToWorld(cellPos) + new Vector3(0.5f, 0.5f, 0f);
+        //            Gizmos.DrawWireCube(worldPos, Vector3.one * 0.95f);
+        //        }
+        //    }
+        //}
 
-        // Draw a red box for every spawned tree
-        Gizmos.color = Color.red;
-        foreach (var kvp in spawnedForests)
-        {
-            Vector2Int tilePos = kvp.Key;
-            Vector3Int cellPos = new Vector3Int(tilePos.x, tilePos.y, 0);
-            Vector3 worldPos = tilemap.CellToWorld(cellPos) + new Vector3(0.5f, 0.5f, 0f);
-            Gizmos.DrawWireCube(worldPos, Vector3.one * 0.7f);
-        }
+        //// Draw a red box for every spawned tree
+        //Gizmos.color = Color.red;
+        //foreach (var kvp in spawnedForests)
+        //{
+        //    Vector2Int tilePos = kvp.Key;
+        //    Vector3Int cellPos = new Vector3Int(tilePos.x, tilePos.y, 0);
+        //    Vector3 worldPos = tilemap.CellToWorld(cellPos) + new Vector3(0.5f, 0.5f, 0f);
+        //    Gizmos.DrawWireCube(worldPos, Vector3.one * 0.7f);
+        //}
     }
 #endif
 

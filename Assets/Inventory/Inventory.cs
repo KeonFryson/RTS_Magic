@@ -13,7 +13,7 @@ public class Inventory : MonoBehaviour
 
     [Header("Test Items")]
     public InventoryItem[] TestItem;
-    
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -25,14 +25,30 @@ public class Inventory : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         items = new InventoryItem[maxItems];
-        ClearInventory();
+
+        // Load inventory data after singleton is set
+        SaveManager.LoadInventory(this);
     }
 
-    void Start()
+    private void Start()
     {
-        for (int i = 0; i < TestItem.Length; i++)
+        // Only add test items if inventory is empty (i.e., no save loaded)
+        bool hasAnyItem = false;
+        foreach (var item in items)
         {
-            AddItem(TestItem[i]);
+            if (item != null)
+            {
+                hasAnyItem = true;
+                break;
+            }
+        }
+
+        if (!hasAnyItem)
+        {
+            for (int i = 0; i < TestItem.Length; i++)
+            {
+                AddItem(TestItem[i]);
+            }
         }
     }
 
