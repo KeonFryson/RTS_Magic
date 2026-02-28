@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67db3be08a7f81447812a71e0f1fd809, type: 3}
-  m_Name: Logs
+  m_Name: Iron
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
   itemData:
-    itemName: Logs
-    itemIcon: {fileID: -4962880513221496114, guid: f8c4a97b5c8c3b844bebb833eae4b530, type: 3}
-    itemID: 0
-    quantity: 1
-    maxStackSize: 64
-    description: Wood Logs
+    itemName: Iron
+    itemIcon: {fileID: 6922855713405318429, guid: bc3fd74113aeb0842b78e1f9315b3163, type: 3}
+    itemID: 3
+    quantity: 0
+    maxStackSize: 100
+    description: 
     isConsumable: 0

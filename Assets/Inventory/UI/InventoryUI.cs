@@ -67,14 +67,14 @@ public class InventoryUI : MonoBehaviour
             {
                 itemImage.sprite = items[i].itemData.itemIcon;
                 quantityText.text = items[i].itemData.quantity > 1 ? items[i].itemData.quantity.ToString() : "";
-                Debug.Log($"Updated slot {i} with {items[i].itemData.itemName} x{items[i].itemData.quantity}");
+               // Debug.Log($"Updated slot {i} with {items[i].itemData.itemName} x{items[i].itemData.quantity}");
 
             }
             else
             {
                 itemImage.sprite = null;
                 quantityText.text = "";
-                Debug.Log($"Cleared slot {i}");
+               // Debug.Log($"Cleared slot {i}");
             }
         }
     }

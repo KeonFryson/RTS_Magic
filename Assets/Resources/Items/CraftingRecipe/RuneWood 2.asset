@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c74cfc5be1845d04084427297085567c, type: 3}
+  m_Name: RuneWood 2
+  m_EditorClassIdentifier: Assembly-CSharp::CraftingRecipe
+  ingredients:
+  - {fileID: 11400000, guid: 657006b3133dbe2499d1094247124a9a, type: 2}
+  ingredientCounts: 05000000
+  result: {fileID: 11400000, guid: 894c262060496bd428fdfeab39fbda15, type: 2}
+  resultCount: 10

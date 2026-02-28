@@ -10,11 +10,7 @@ public static class SaveManager
     // Control saving in editor
     public static bool AllowEditorSave { get; set; } = false;
 
-    static SaveManager()
-    {
-        LoadAll();
-    }
-
+    
     // --- Destroyed Resource Nodes ---
     public static void MarkResourceNodeDestroyed(Vector2Int tilePos)
     {
@@ -29,7 +25,7 @@ public static class SaveManager
     // --- Inventory ---
     public static void SaveInventory(InventoryItem[] items)
     {
-        Debug.Log($"[SaveManager] Saving inventory. Item slots: {items.Length}");
+        //Debug.Log($"[SaveManager] Saving inventory. Item slots: {items.Length}");
         var list = new List<string>();
         int savedCount = 0;
         foreach (var item in items)
@@ -38,16 +34,16 @@ public static class SaveManager
             // Save itemID and quantity
             var data = $"{item.itemData.itemID}|{item.itemData.quantity}";
             list.Add(data);
-            Debug.Log($"[SaveManager] Saving item: ID={item.itemData.itemID}, Qty={item.itemData.quantity}");
+            //Debug.Log($"[SaveManager] Saving item: ID={item.itemData.itemID}, Qty={item.itemData.quantity}");
             savedCount++;
         }
-        Debug.Log($"[SaveManager] Total items saved: {savedCount}");
+        //Debug.Log($"[SaveManager] Total items saved: {savedCount}");
         PlayerPrefs.SetString(InventoryKey, string.Join(";", list));
     }
 
     public static void LoadInventory(Inventory inventory)
     {
-        Debug.Log("[SaveManager] LoadInventory called");
+       // Debug.Log("[SaveManager] LoadInventory called");
         var data = PlayerPrefs.GetString(InventoryKey, "");
         if (string.IsNullOrEmpty(data))
         {
@@ -56,7 +52,7 @@ public static class SaveManager
         }
 
         var entries = data.Split(';');
-        Debug.Log($"[SaveManager] Loading inventory. Entries found: {entries.Length}");
+       // Debug.Log($"[SaveManager] Loading inventory. Entries found: {entries.Length}");
         inventory.ClearInventory();
         int loadedCount = 0;
         foreach (var entry in entries)
@@ -83,7 +79,7 @@ public static class SaveManager
                         quantity = qty
                     };
                     inventory.AddItem(item);
-                    Debug.Log($"[SaveManager] Loaded item: ID={itemID}, Qty={qty}");
+                   // Debug.Log($"[SaveManager] Loaded item: ID={itemID}, Qty={qty}");
                     loadedCount++;
                 }
                 else
@@ -96,7 +92,7 @@ public static class SaveManager
                 Debug.LogWarning($"[SaveManager] Failed to parse inventory entry: {entry}");
             }
         }
-        Debug.Log($"[SaveManager] Total items loaded: {loadedCount}");
+       // Debug.Log($"[SaveManager] Total items loaded: {loadedCount}");
         inventory.OnInventoryChanged?.Invoke();
     }
 

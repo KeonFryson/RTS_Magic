@@ -52,9 +52,6 @@ public class Inventory : MonoBehaviour
         }
     }
 
-
-
-
     public InventoryItem CreateSampleItem(string name, string description, int quantity)
     {
         InventoryItem newItem = ScriptableObject.CreateInstance<InventoryItem>();
@@ -64,6 +61,56 @@ public class Inventory : MonoBehaviour
         return newItem;
     }
 
+    // Returns the total quantity of items with the given itemID
+    public int GetItemCount(int itemID)
+    {
+        int count = 0;
+        foreach (var item in items)
+        {
+            if (item != null && item.itemData.itemID == itemID)
+            {
+                count += item.itemData.quantity;
+            }
+        }
+        return count;
+    }
+
+    // Adds a specific quantity of an item (used by crafting)
+    public void AddItem(InventoryItem item, int quantity)
+    {
+        int originalQuantity = item.itemData.quantity;
+        item.itemData.quantity = quantity;
+        AddItem(item);
+        item.itemData.quantity = originalQuantity; // Restore original in case it's reused elsewhere
+    }
+
+    // Removes a specific quantity of an item by itemID (used by crafting)
+    public void RemoveItem(int itemID, int quantity)
+    {
+        int quantityToRemove = quantity;
+        for (int i = 0; i < items.Length && quantityToRemove > 0; i++)
+        {
+            if (items[i] != null && items[i].itemData.itemID == itemID)
+            {
+                int stackQuantity = items[i].itemData.quantity;
+                if (stackQuantity > quantityToRemove)
+                {
+                    items[i].itemData.quantity -= quantityToRemove;
+                    quantityToRemove = 0;
+                }
+                else
+                {
+                    quantityToRemove -= stackQuantity;
+                    items[i] = null;
+                }
+                OnInventoryChanged?.Invoke();
+            }
+        }
+        if (quantityToRemove > 0)
+            Debug.LogWarning($"Not enough of itemID {itemID} in inventory to remove {quantity}.");
+    }
+
+    // Adds an item to the inventory, stacking if possible
     public void AddItem(InventoryItem item)
     {
         int maxStack = item.itemData.maxStackSize;
@@ -116,6 +163,7 @@ public class Inventory : MonoBehaviour
                 itemName = item.itemData.itemName,
                 description = item.itemData.description,
                 itemIcon = item.itemData.itemIcon,
+                itemID = item.itemData.itemID,
                 quantity = addAmount,
                 maxStackSize = maxStack
             };
@@ -125,6 +173,8 @@ public class Inventory : MonoBehaviour
             Debug.Log($"Created new stack of {addAmount} {item.itemData.itemName} in slot {emptyIndex}.");
         }
     }
+
+    // Removes a specific quantity of an item by name (legacy, not used by crafting)
     public void RemoveItemStack(string itemName, int quantity)
     {
         int quantityToRemove = quantity;
@@ -154,6 +204,7 @@ public class Inventory : MonoBehaviour
             Debug.LogWarning($"Not enough {itemName} in inventory to remove {quantity}.");
     }
 
+    // Removes a specific InventoryItem instance
     public void RemoveItem(InventoryItem item)
     {
         for (int i = 0; i < items.Length; i++)
@@ -169,7 +220,7 @@ public class Inventory : MonoBehaviour
         Debug.LogWarning("Item not found in inventory!");
     }
 
-
+    // Moves an item from one slot to another
     public void MoveItem(int fromIndex, int toIndex)
     {
         if (fromIndex < 0 || fromIndex >= items.Length || toIndex < 0 || toIndex >= items.Length)
@@ -184,7 +235,7 @@ public class Inventory : MonoBehaviour
         Debug.Log($"Moved item from slot {fromIndex} to slot {toIndex}.");
     }
 
-
+    // Use an item (implement your own logic)
     public void UseItem(InventoryItem item)
     {
         // Implement item usage logic here
@@ -192,6 +243,7 @@ public class Inventory : MonoBehaviour
         Debug.Log($"Used {item.itemData.itemName}.");
     }
 
+    // Clears the inventory
     public void ClearInventory()
     {
         for (int i = 0; i < items.Length; i++)
@@ -202,12 +254,9 @@ public class Inventory : MonoBehaviour
         Debug.Log("Inventory cleared.");
     }
 
+    // Returns all items in the inventory
     public InventoryItem[] GetItems()
     {
         return items;
     }
-
-
-
-
 }
