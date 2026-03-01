@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 4545388207958611698}
   - component: {fileID: 3233384865826205769}
   - component: {fileID: 7028674290216414210}
-  - component: {fileID: 5773565103116796717}
   m_Layer: 5
   m_Name: Inventory
   m_TagString: Untagged
@@ -118,29 +117,4 @@ MonoBehaviour:
   itemSlotPrefab: {fileID: 2742715281295341218, guid: 99fd77cf03d07fe458f93ef395f7ea53, type: 3}
   itemOutlineSlots: []
   itemSlotObjects: []
---- !u!114 &5773565103116796717
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1760003563494420107}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 50
-  m_ChildAlignment: 7
-  m_Spacing: -250
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  SlotsParent: {fileID: 0}

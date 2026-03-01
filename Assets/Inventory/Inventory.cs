@@ -52,6 +52,14 @@ public class Inventory : MonoBehaviour
         }
     }
 
+    [ContextMenu("Add Sample Item")]
+    public void AddSampleItem()
+    {
+
+        AddItem(TestItem[0]);
+        Debug.Log("Added sample item to inventory.");
+    }
+
     public InventoryItem CreateSampleItem(string name, string description, int quantity)
     {
         InventoryItem newItem = ScriptableObject.CreateInstance<InventoryItem>();
@@ -165,12 +173,15 @@ public class Inventory : MonoBehaviour
                 itemIcon = item.itemData.itemIcon,
                 itemID = item.itemData.itemID,
                 quantity = addAmount,
-                maxStackSize = maxStack
+                maxStackSize = maxStack,
+                buildingPrefab = item.itemData.buildingPrefab,
+                placementMask = item.itemData.placementMask,
+
             };
             items[emptyIndex] = newStack;
             quantityToAdd -= addAmount;
             OnInventoryChanged?.Invoke();
-            Debug.Log($"Created new stack of {addAmount} {item.itemData.itemName} in slot {emptyIndex}.");
+         //   Debug.Log($"Created new stack of {addAmount} {item.itemData.itemName} in slot {emptyIndex}.");
         }
     }
 
@@ -251,7 +262,7 @@ public class Inventory : MonoBehaviour
             items[i] = null;
             OnInventoryChanged?.Invoke();
         }
-        Debug.Log("Inventory cleared.");
+       // Debug.Log("Inventory cleared.");
     }
 
     // Returns all items in the inventory

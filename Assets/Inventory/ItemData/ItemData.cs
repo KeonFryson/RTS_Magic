@@ -14,4 +14,7 @@ public class ItemData
     public string description;
     public bool isConsumable;
 
+    // Add this line to support building items
+    public GameObject buildingPrefab;
+    public LayerMask placementMask;
 }

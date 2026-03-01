@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db3be08a7f81447812a71e0f1fd809, type: 3}
+  m_Name: TestBuilding
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
+  itemData:
+    itemName: TestBuild
+    itemIcon: {fileID: 21300174, guid: c3a40e1c46727b94e959990527f8e7fa, type: 3}
+    itemID: 5
+    quantity: 0
+    maxStackSize: 5
+    description: 
+    isConsumable: 0
+    buildingPrefab: {fileID: 4584577229965925423, guid: d99d35ec4e21f5d4fb7d46a7e8af7f90, type: 3}
+    placementMask:
+      serializedVersion: 2
+      m_Bits: 9

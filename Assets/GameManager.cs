@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -8,6 +9,31 @@ public class GameManager : MonoBehaviour
         SaveManager.LoadAll();
     }
 
+
+    void Start()
+    {
+     
+
+        foreach (var data in SaveManager.GetPlacedBuildings())
+        {
+            InventoryItem item = ItemDatabase.Instance.GetInventoryItemByID(data.itemID);
+            if (item != null && item.itemData.buildingPrefab != null)
+            {
+                Vector3 pos = new Vector3(data.x, data.y, data.z);
+                GameObject.Instantiate(item.itemData.buildingPrefab, pos, Quaternion.identity);
+            }
+        }
+
+        var player = GameObject.FindWithTag("Player");
+        var playerpos = SaveManager.LoadPlayerPosition();
+        if (player != null && playerpos.HasValue)
+        {
+            player.transform.position = playerpos.Value;
+            Debug.Log($"Player position loaded: {playerpos.Value}");
+        }
+    
+    }
+
     private void OnApplicationQuit()
     {
         if (!SaveManager.AllowEditorSave)
@@ -16,7 +42,9 @@ public class GameManager : MonoBehaviour
             return;
         }
         
+       
         SaveManager.SaveAll();
+        
     }
 
     // Optionally, call SaveManager.SaveAll() at other times (e.g., on pause, manual save, etc.)
@@ -26,7 +54,11 @@ public class GameManager : MonoBehaviour
     {
         SaveManager.AllowEditorSave = false; // Disable editor save to prevent saving after reset
         PlayerPrefs.DeleteAll();
+#if UNITY_EDITOR
+        EditorApplication.isPlaying = false;
+#else
         Application.Quit();
+#endif
         Debug.Log("All saves have been reset.");
     }
 }

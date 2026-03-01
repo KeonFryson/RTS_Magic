@@ -129,9 +129,20 @@ public class WorldGen : MonoBehaviour
         lastPlayerTilePos = GetPlayerTilePosition() + Vector2Int.one * 9999;
         UpdateWorldAroundPlayer();
 
-        StartCoroutine(SpawnPlayerAfterWorldReady());
+        // --- Only spawn player if there is no saved position ---
+        var savedPos = SaveManager.LoadPlayerPosition();
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (savedPos.HasValue && playerObj != null)
+        {
+            playerTransform = playerObj.transform;
+            playerTransform.position = savedPos.Value;
+            StartCoroutine(LoadingPanel(false, false));
+        }
+        else
+        {
+            StartCoroutine(SpawnPlayerAfterWorldReady());
+        }
     }
-
     private IEnumerator SpawnPlayerAfterWorldReady()
     {
         while (isChunkGenRunning)
@@ -152,14 +163,14 @@ public class WorldGen : MonoBehaviour
     {
         while (!IsStartofGame)
         {
-            Debug.Log("World generation complete. Spawning player...");
+            //Debug.Log("World generation complete. Spawning player...");
             yield return new WaitForSeconds(0.8f);
             IsStartofGame = true;
         }
 
         if (loadingPanel != null)
         {
-            Debug.Log(show ? "Showing loading panel..." : "Hiding loading panel...");
+            //Debug.Log(show ? "Showing loading panel..." : "Hiding loading panel...");
             loadingPanel.SetActive(show);
             Player2DMovement.Instance.enabled = !show;
         }
