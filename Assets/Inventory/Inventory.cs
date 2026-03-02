@@ -60,6 +60,35 @@ public class Inventory : MonoBehaviour
         Debug.Log("Added sample item to inventory.");
     }
 
+    public bool RemoveItemByID(int itemID, int quantity)
+    {
+        int quantityToRemove = quantity;
+        for (int i = 0; i < items.Length && quantityToRemove > 0; i++)
+        {
+            if (items[i] != null && items[i].itemData.itemID == itemID)
+            {
+                int stackQuantity = items[i].itemData.quantity;
+                if (stackQuantity > quantityToRemove)
+                {
+                    items[i].itemData.quantity -= quantityToRemove;
+                    quantityToRemove = 0;
+                }
+                else
+                {
+                    quantityToRemove -= stackQuantity;
+                    items[i] = null;
+                }
+                OnInventoryChanged?.Invoke();
+            }
+        }
+        if (quantityToRemove > 0)
+        {
+            Debug.LogWarning($"Not enough of itemID {itemID} in inventory to remove {quantity}.");
+            return false;
+        }
+        return true;
+    }
+
     public InventoryItem CreateSampleItem(string name, string description, int quantity)
     {
         InventoryItem newItem = ScriptableObject.CreateInstance<InventoryItem>();
@@ -90,6 +119,35 @@ public class Inventory : MonoBehaviour
         item.itemData.quantity = quantity;
         AddItem(item);
         item.itemData.quantity = originalQuantity; // Restore original in case it's reused elsewhere
+    }
+    public void AddItemByID(int itemID, int quantity)
+    {
+        // Use ItemDatabase to get the item template by ID
+        InventoryItem template = ItemDatabase.Instance != null
+            ? ItemDatabase.Instance.GetInventoryItemByID(itemID)
+            : null;
+
+        if (template == null)
+        {
+            Debug.LogWarning($"Item ID {itemID} not found in ItemDatabase.");
+            return;
+        }
+
+        // Create a new InventoryItem instance for stacking logic
+        InventoryItem newItem = ScriptableObject.CreateInstance<InventoryItem>();
+        newItem.itemData = new ItemData
+        {
+            itemName = template.itemData.itemName,
+            description = template.itemData.description,
+            itemIcon = template.itemData.itemIcon,
+            itemID = template.itemData.itemID,
+            quantity = quantity,
+            maxStackSize = template.itemData.maxStackSize,
+            buildingPrefab = template.itemData.buildingPrefab,
+            placementMask = template.itemData.placementMask,
+        };
+
+        AddItem(newItem);
     }
 
     // Removes a specific quantity of an item by itemID (used by crafting)

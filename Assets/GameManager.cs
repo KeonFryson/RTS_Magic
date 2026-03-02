@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
             GameObject.Instantiate(item.itemData.buildingPrefab, pos, Quaternion.identity);
             Debug.Log($"Instantiated buildingPrefab for itemID: {data.itemID} at {pos}");
         }
+       
 
         var player = GameObject.FindWithTag("Player");
         var playerpos = SaveManager.LoadPlayerPosition();
@@ -39,7 +40,9 @@ public class GameManager : MonoBehaviour
             player.transform.position = playerpos.Value;
             Debug.Log($"Player position loaded: {playerpos.Value}");
         }
-    
+
+        SaveManager.LoadAllStorageBoxes();
+
     }
 
     private void OnApplicationQuit()
@@ -51,6 +54,7 @@ public class GameManager : MonoBehaviour
         }
         
         SaveManager.SavePlacedBuildings();
+        SaveManager.SaveAllStorageBoxes();
         SaveManager.SaveAll();
         
     }

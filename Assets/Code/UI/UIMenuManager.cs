@@ -5,6 +5,7 @@ public class UIMenuManager : MonoBehaviour
 {
     [SerializeField] private GameObject pauseMenu;
     [SerializeField] private GameObject craftingMenu;
+    [SerializeField] private GameObject ChatMwnu;
     [SerializeField] private GameObject storageInventoryMenu;
 
     private InputSystem_Actions inputActions;
@@ -16,7 +17,7 @@ public class UIMenuManager : MonoBehaviour
         craftingMenu.SetActive(false);
         pauseMenu.SetActive(false);
         storageInventoryMenu.SetActive(false);
-
+        ChatMwnu.SetActive(false);
     }
 
     private void OnDestroy()
@@ -36,9 +37,13 @@ public class UIMenuManager : MonoBehaviour
             ToggleMenu(craftingMenu);
             Debug.Log("Crafting menu toggled");
         }
-        else if (Keyboard.current.iKey.wasPressedThisFrame && storageInventoryMenu != null)
+        else if (Keyboard.current.leftBracketKey.wasPressedThisFrame && storageInventoryMenu != null)
         {
             ToggleMenu(storageInventoryMenu);
+        }
+        else if (Keyboard.current.tabKey.wasPressedThisFrame && ChatMwnu != null)
+        {
+            ToggleMenu(ChatMwnu);
         }
     }
 
@@ -50,6 +55,7 @@ public class UIMenuManager : MonoBehaviour
         pauseMenu.SetActive(false);
         craftingMenu.SetActive(false);
         storageInventoryMenu.SetActive(false);
+        ChatMwnu.SetActive(false);
 
         // Activate the selected menu if it was not already active
         if (willBeActive)

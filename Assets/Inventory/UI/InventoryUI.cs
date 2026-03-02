@@ -39,8 +39,9 @@ public class InventoryUI : MonoBehaviour
                 quantityText.transform.SetParent(slotContent.transform, true);
             }
 
-            var dragHandler = slotContent.AddComponent<InventorySlotDragHandler>();
+            var dragHandler = slotContent.AddComponent<UniversalSlotDragHandler>();
             dragHandler.SlotIndex = i;
+            dragHandler.inventoryUI = this;
 
         }
 
@@ -90,7 +91,7 @@ public class InventoryUI : MonoBehaviour
         for (int i = 0; i < itemSlotObjects.Length; i++)
         {
             // Update SlotIndex for drag handler
-            var dragHandler = itemSlotObjects[i].GetComponent<InventorySlotDragHandler>();
+            var dragHandler = itemSlotObjects[i].GetComponent<UniversalSlotDragHandler>();
             if (dragHandler != null)
                 dragHandler.SlotIndex = i;
 

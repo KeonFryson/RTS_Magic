@@ -83,7 +83,15 @@ public class BuildingPlacer : MonoBehaviour
 
     private void PlaceBuilding(Vector3 position)
     {
-        Instantiate(selectedBuildingItem.itemData.buildingPrefab, position, Quaternion.identity);
+        GameObject placed = Instantiate(selectedBuildingItem.itemData.buildingPrefab, position, Quaternion.identity);
+
+        // Assign a unique boxID if this is a StorageBox
+        var storageBox = placed.GetComponent<StorageBox>();
+        if (storageBox != null)
+        {
+            storageBox.boxID = System.Guid.NewGuid().ToString();
+        }
+
         SaveManager.AddPlacedBuilding(selectedBuildingItem.itemData.itemID, position);
         // Optionally: Remove one building item from inventory
         Inventory.Instance.RemoveItemStack(selectedBuildingItem.itemData.itemName, 1);

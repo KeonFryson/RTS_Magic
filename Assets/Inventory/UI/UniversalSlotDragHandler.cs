@@ -1,13 +1,15 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventorySlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler
+public class UniversalSlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler
 {
     public int SlotIndex { get; set; }
+    public InventoryUI inventoryUI;
+    public StorageBoxUI storageBoxUI;
 
-    private InventoryUI inventoryUI;
     private Canvas canvas;
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
@@ -23,7 +25,9 @@ public class InventorySlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragH
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
         inventoryUI = GetComponentInParent<InventoryUI>();
+        storageBoxUI = GetComponentInParent<StorageBoxUI>();
         canvas = GetComponentInParent<Canvas>();
 
         layoutElement = GetComponent<LayoutElement>();
@@ -35,21 +39,11 @@ public class InventorySlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragH
     public void OnPointerDown(PointerEventData eventData)
     {
         originalPosition = rectTransform.anchoredPosition;
-
-        if (!inventoryUI.HasItem(SlotIndex))
-        {
-            Debug.Log($"[InventorySlotDragHandler] No item in slot {SlotIndex}, swap not allowed.");
-            return;
-        }
+        Debug.Log($"Pointer down on slot {SlotIndex} at position {originalPosition}");
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!inventoryUI.HasItem(SlotIndex))
-        {
-            Debug.Log($"[InventorySlotDragHandler] No item in slot {SlotIndex}, swap not allowed.");
-            return;
-        }
         canvasGroup.blocksRaycasts = false;
         canvasGroup.alpha = 0.7f;
         transform.SetAsLastSibling();
@@ -57,7 +51,6 @@ public class InventorySlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragH
         layoutElement.ignoreLayout = true;
         layoutElement.layoutPriority = 100;
 
-        // Ensure the slot is rendered above others
         dragCanvas = GetComponent<Canvas>();
         if (dragCanvas == null)
         {
@@ -75,32 +68,23 @@ public class InventorySlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragH
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!inventoryUI.HasItem(SlotIndex))
-        {
-            Debug.Log($"[InventorySlotDragHandler] No item in slot {SlotIndex}, swap not allowed.");
-            return;
-        }
         rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        // Restore raycast and visual state
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
 
-        // Restore layout state
         layoutElement.ignoreLayout = false;
         layoutElement.layoutPriority = 1;
 
-        // Restore canvas sorting
         if (dragCanvas != null)
         {
             dragCanvas.sortingOrder = originalSortingOrder;
             if (canvasOverridden)
             {
                 dragCanvas.overrideSorting = false;
-                // If we added the Canvas for drag, remove it after drag ends
                 if (dragCanvas.gameObject == gameObject)
                 {
                     Destroy(dragCanvas);
@@ -108,53 +92,64 @@ public class InventorySlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragH
             }
         }
 
-        // Reset position
         rectTransform.anchoredPosition = originalPosition;
 
-        bool swapped = false;
-
         GameObject targetObj = eventData.pointerEnter;
-        if (targetObj != null)
-        {
-            var componentNames = string.Join(", ", targetObj.GetComponents<Component>().Select(c => c.GetType().Name));
-        }
-        else
-        {
-            Debug.Log("[InventorySlotDragHandler] pointerEnter GameObject: null");
-        }
-
-        // Traverse up the hierarchy to find InventorySlotDragHandler
-        InventorySlotDragHandler targetHandler = null;
+        UniversalSlotDragHandler targetHandler = null;
         Transform current = targetObj != null ? targetObj.transform : null;
         while (current != null)
         {
-            targetHandler = current.GetComponent<InventorySlotDragHandler>();
+            targetHandler = current.GetComponent<UniversalSlotDragHandler>();
             if (targetHandler != null && current.gameObject != gameObject)
                 break;
             current = current.parent;
         }
 
-        // Check if this slot has an item before allowing swap
         if (targetHandler != null && targetHandler != this)
         {
-            if (!inventoryUI.HasItem(SlotIndex))
-            {
-                Debug.Log($"[InventorySlotDragHandler] No item in slot {SlotIndex}, swap not allowed.");
-            }
-            else
+            // Inventory to Inventory
+            if (inventoryUI != null && targetHandler.inventoryUI != null)
             {
                 inventoryUI.SwapItems(SlotIndex, targetHandler.SlotIndex);
-                swapped = true;
             }
-        }
-
-        if (!swapped)
-        {
-            Debug.Log($"[InventorySlotDragHandler] No swap detected, resetting position for slot {SlotIndex}");
-        }
-        else
-        {
-            Debug.Log($"[InventorySlotDragHandler] Swap complete, resetting position for slot {SlotIndex}");
+            // StorageBox to StorageBox
+            else if (storageBoxUI != null && targetHandler.storageBoxUI != null)
+            {
+                storageBoxUI.SwapItems(SlotIndex, targetHandler.SlotIndex);
+            }
+            // Inventory to StorageBox
+            else if (storageBoxUI != null && targetHandler.inventoryUI != null)
+            {
+                var slots = storageBoxUI.storageBox.GetSlots();
+                if (SlotIndex >= 0 && SlotIndex < slots.Count && slots[SlotIndex].item != null)
+                {
+                    var item = slots[SlotIndex].item;
+                    int itemId = item.itemData.itemID;
+                    int amount = item.itemData.quantity;
+                    if (storageBoxUI.storageBox.RemoveItem(itemId, amount))
+                    {
+                        Inventory.Instance.AddItem(item, amount);
+                        storageBoxUI.Refresh();
+                        targetHandler.inventoryUI.UpdateInventoryUI();
+                    }
+                }
+            }
+            else if (inventoryUI != null && targetHandler.storageBoxUI != null)
+            {
+                InventoryItem[] items = Inventory.Instance.GetItems();
+                if (SlotIndex >= 0 && SlotIndex < items.Length && items[SlotIndex] != null)
+                {
+                    var item = items[SlotIndex];
+                    int itemId = item.itemData.itemID;
+                    int amount = item.itemData.quantity;
+                    if (Inventory.Instance.RemoveItemByID(itemId, amount))
+                    {
+                        targetHandler.storageBoxUI.storageBox.AddItem(item);
+                        inventoryUI.UpdateInventoryUI();
+                        targetHandler.storageBoxUI.Refresh();
+                    }
+                }
+            }
         }
     }
 }
