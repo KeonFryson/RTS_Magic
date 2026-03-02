@@ -118,6 +118,7 @@ public class Inventory : MonoBehaviour
             Debug.LogWarning($"Not enough of itemID {itemID} in inventory to remove {quantity}.");
     }
 
+
     // Adds an item to the inventory, stacking if possible
     public void AddItem(InventoryItem item)
     {
@@ -268,6 +269,8 @@ public class Inventory : MonoBehaviour
     // Returns all items in the inventory
     public InventoryItem[] GetItems()
     {
+        
         return items;
     }
+
 }

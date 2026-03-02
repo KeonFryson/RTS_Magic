@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 
@@ -14,6 +15,10 @@ public class BuildingPlacer : MonoBehaviour
 
     private void Update()
     {
+        // Block placement if mouse is over UI
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1))
+            return;
+
         // Check inventory selection each frame
         InventoryItem invItem = GetSelectedBuildingItem();
         if (invItem != selectedBuildingItem)
@@ -79,6 +84,7 @@ public class BuildingPlacer : MonoBehaviour
     private void PlaceBuilding(Vector3 position)
     {
         Instantiate(selectedBuildingItem.itemData.buildingPrefab, position, Quaternion.identity);
+        SaveManager.AddPlacedBuilding(selectedBuildingItem.itemData.itemID, position);
         // Optionally: Remove one building item from inventory
         Inventory.Instance.RemoveItemStack(selectedBuildingItem.itemData.itemName, 1);
         CancelPlacement();
