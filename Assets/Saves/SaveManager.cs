@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.IO;
 
 [System.Serializable]
 public class PlacedBuildingData
@@ -9,40 +10,48 @@ public class PlacedBuildingData
     public float x, y, z;
 }
 
- 
+[System.Serializable]
+public class SaveData
+{
+    public List<PlacedBuildingData> placedBuildings = new List<PlacedBuildingData>();
+    public List<Vector2Int> destroyedNodes = new List<Vector2Int>();
+    public List<InventoryItemData> inventory = new List<InventoryItemData>();
+    public Vector3 playerPosition;
+    public bool hasPlayerPosition = false;
+}
+
+[System.Serializable]
+public class InventoryItemData
+{
+    public int itemID;
+    public int quantity;
+}
+
 public static class SaveManager
 {
-    private const string DestroyedNodesKey = "DestroyedResourceNodes";
-    private const string InventoryKey = "PlayerInventory";
-    private const string PlacedBuildingsKey = "PlacedBuildings";
-    private const string PlayerPosKey = "PlayerPosition";
- 
+    private static readonly string SaveFilePath = Path.Combine(Application.persistentDataPath, "savegame.json");
+
     private static HashSet<Vector2Int> destroyedNodes = new HashSet<Vector2Int>();
     private static List<PlacedBuildingData> placedBuildings = new List<PlacedBuildingData>();
 
-    // Control saving in editor
     public static bool AllowEditorSave { get; set; } = false;
 
-   
     // --- Player Position ---
     public static void SavePlayerPosition(Vector3 pos)
     {
-        PlayerPrefs.SetString(PlayerPosKey, $"{pos.x}|{pos.y}|{pos.z}");
+        Debug.Log($"[SaveManager] SavePlayerPosition: Saving position {pos}");
+        saveData.playerPosition = pos;
+        saveData.hasPlayerPosition = true;
     }
 
     public static Vector3? LoadPlayerPosition()
     {
-        var data = PlayerPrefs.GetString(PlayerPosKey, "");
-        if (string.IsNullOrEmpty(data))
-            return null;
-        var parts = data.Split('|');
-        if (parts.Length == 3 &&
-            float.TryParse(parts[0], out float x) &&
-            float.TryParse(parts[1], out float y) &&
-            float.TryParse(parts[2], out float z))
+        if (saveData.hasPlayerPosition)
         {
-            return new Vector3(x, y, z);
+            Debug.Log($"[SaveManager] LoadPlayerPosition: playerPosition={saveData.playerPosition}");
+            return saveData.playerPosition;
         }
+        Debug.Log("[SaveManager] LoadPlayerPosition: No player position saved.");
         return null;
     }
 
@@ -56,41 +65,6 @@ public static class SaveManager
             y = position.y,
             z = position.z
         });
-    }
-
-    public static void SavePlacedBuildings()
-    {
-        var data = placedBuildings
-            .Select(b => $"{b.itemID}|{b.x}|{b.y}|{b.z}")
-            .ToArray();
-        PlayerPrefs.SetString(PlacedBuildingsKey, string.Join(";", data));
-    }
-
-    public static void LoadPlacedBuildings()
-    {
-        placedBuildings.Clear();
-        var data = PlayerPrefs.GetString(PlacedBuildingsKey, "");
-        if (string.IsNullOrEmpty(data))
-            return;
-        var entries = data.Split(';');
-        foreach (var entry in entries)
-        {
-            var parts = entry.Split('|');
-            if (parts.Length == 4 &&
-                int.TryParse(parts[0], out int itemID) &&
-                float.TryParse(parts[1], out float x) &&
-                float.TryParse(parts[2], out float y) &&
-                float.TryParse(parts[3], out float z))
-            {
-                placedBuildings.Add(new PlacedBuildingData
-                {
-                    itemID = itemID,
-                    x = x,
-                    y = y,
-                    z = z
-                });
-            }
-        }
     }
 
     public static List<PlacedBuildingData> GetPlacedBuildings()
@@ -112,114 +86,106 @@ public static class SaveManager
     // --- Inventory ---
     public static void SaveInventory(InventoryItem[] items)
     {
-        var list = new List<string>();
+        saveData.inventory.Clear();
         foreach (var item in items)
         {
             if (item == null || item.itemData == null) continue;
-            var data = $"{item.itemData.itemID}|{item.itemData.quantity}";
-            list.Add(data);
+            saveData.inventory.Add(new InventoryItemData
+            {
+                itemID = item.itemData.itemID,
+                quantity = item.itemData.quantity
+            });
         }
-        PlayerPrefs.SetString(InventoryKey, string.Join(";", list));
     }
 
     public static void LoadInventory(Inventory inventory)
     {
-        var data = PlayerPrefs.GetString(InventoryKey, "");
-        if (string.IsNullOrEmpty(data))
+        inventory.ClearInventory();
+        if (saveData.inventory == null)
+            saveData.inventory = new List<InventoryItemData>();
+
+        if (ItemDatabase.Instance == null)
         {
-            Debug.Log("[SaveManager] No inventory data found to load.");
+            Debug.LogError("[SaveManager] ItemDatabase.Instance is null! Cannot load inventory. Make sure ItemDatabase is initialized before loading inventory.");
             return;
         }
 
-        var entries = data.Split(';');
-        inventory.ClearInventory();
-        foreach (var entry in entries)
+        foreach (var itemData in saveData.inventory)
         {
-            var parts = entry.Split('|');
-            if (parts.Length == 2 &&
-                int.TryParse(parts[0], out int itemID) &&
-                int.TryParse(parts[1], out int qty))
+            InventoryItem itemTemplate = ItemDatabase.Instance.GetInventoryItemByID(itemData.itemID);
+            if (itemTemplate != null)
             {
-                InventoryItem itemTemplate = ItemDatabase.Instance.GetInventoryItemByID(itemID);
-                if (itemTemplate != null)
+                InventoryItem item = ScriptableObject.CreateInstance<InventoryItem>();
+                item.itemData = new ItemData
                 {
-                    InventoryItem item = ScriptableObject.CreateInstance<InventoryItem>();
-                    item.itemData = new ItemData
-                    {
-                        itemID = itemTemplate.itemData.itemID,
-                        itemName = itemTemplate.itemData.itemName,
-                        itemIcon = itemTemplate.itemData.itemIcon,
-                        maxStackSize = itemTemplate.itemData.maxStackSize,
-                        description = itemTemplate.itemData.description,
-                        isConsumable = itemTemplate.itemData.isConsumable,
-                        quantity = qty,
-                        buildingPrefab = itemTemplate.itemData.buildingPrefab,
-                        placementMask = itemTemplate.itemData.placementMask
-                    };
-                    inventory.AddItem(item);
-                }
-                else
-                {
-                    Debug.LogWarning($"[SaveManager] InventoryItem not found for ID: {itemID}");
-                }
+                    itemID = itemTemplate.itemData.itemID,
+                    itemName = itemTemplate.itemData.itemName,
+                    itemIcon = itemTemplate.itemData.itemIcon,
+                    maxStackSize = itemTemplate.itemData.maxStackSize,
+                    description = itemTemplate.itemData.description,
+                    isConsumable = itemTemplate.itemData.isConsumable,
+                    quantity = itemData.quantity,
+                    buildingPrefab = itemTemplate.itemData.buildingPrefab,
+                    placementMask = itemTemplate.itemData.placementMask
+                };
+                inventory.AddItem(item);
             }
             else
             {
-                Debug.LogWarning($"[SaveManager] Failed to parse inventory entry: {entry}");
+                Debug.LogWarning($"[SaveManager] InventoryItem not found for ID: {itemData.itemID}");
             }
         }
         inventory.OnInventoryChanged?.Invoke();
     }
 
-    
 
     // --- Save/Load All ---
+    private static SaveData saveData = new SaveData();
+
     public static void SaveAll()
     {
 #if UNITY_EDITOR
         if (Application.isEditor && !AllowEditorSave)
             return;
 #endif
-        SaveDestroyedNodes();
+        saveData.destroyedNodes = destroyedNodes.ToList();
+        saveData.placedBuildings = placedBuildings.ToList();
         if (Inventory.Instance != null)
             SaveInventory(Inventory.Instance.GetItems());
-        SavePlacedBuildings();
-        SavePlayerPosition(GameObject.FindWithTag("Player").transform.position);
-       ;
-        PlayerPrefs.Save();
+        var playerObj = GameObject.FindWithTag("Player");
+        if (playerObj != null)
+            SavePlayerPosition(playerObj.transform.position);
+        else
+             Debug.LogWarning("[SaveManager] Player object not found during SaveAll.");
+
+        string json = JsonUtility.ToJson(saveData, true);
+        File.WriteAllText(SaveFilePath, json);
     }
 
     public static void LoadAll()
     {
-        LoadDestroyedNodes();
+        if (!File.Exists(SaveFilePath))
+        {
+            Debug.Log("[SaveManager] No save file found.");
+            saveData = new SaveData(); // Ensure saveData is initialized
+            return;
+        }
+        string json = File.ReadAllText(SaveFilePath);
+        saveData = JsonUtility.FromJson<SaveData>(json) ?? new SaveData();
+
+        // Ensure lists are initialized to avoid null references
+        saveData.destroyedNodes ??= new List<Vector2Int>();
+        saveData.placedBuildings ??= new List<PlacedBuildingData>();
+        saveData.inventory ??= new List<InventoryItemData>();
+
+        destroyedNodes = new HashSet<Vector2Int>(saveData.destroyedNodes);
+        placedBuildings = saveData.placedBuildings;
+
+        Debug.Log($"[SaveManager] LoadAll: Player position loaded as {saveData.playerPosition}");
+
         if (Inventory.Instance != null)
             LoadInventory(Inventory.Instance);
         else
             Debug.LogWarning("[SaveManager] Inventory instance not found during LoadAll.");
-        LoadPlacedBuildings();
-    }
-
-    // --- Internal Save/Load for Destroyed Nodes ---
-    private static void SaveDestroyedNodes()
-    {
-        var list = new List<string>();
-        foreach (var pos in destroyedNodes)
-            list.Add($"{pos.x}_{pos.y}");
-        PlayerPrefs.SetString(DestroyedNodesKey, string.Join(",", list));
-    }
-
-    private static void LoadDestroyedNodes()
-    {
-        destroyedNodes.Clear();
-        var data = PlayerPrefs.GetString(DestroyedNodesKey, "");
-        if (string.IsNullOrEmpty(data))
-            return;
-        var entries = data.Split(',');
-        foreach (var entry in entries)
-        {
-            var parts = entry.Split('_');
-            if (parts.Length == 2 && int.TryParse(parts[0], out int x) && int.TryParse(parts[1], out int y))
-                destroyedNodes.Add(new Vector2Int(x, y));
-        }
     }
 }

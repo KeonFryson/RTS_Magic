@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using System.IO;
 
 public class GameManager : MonoBehaviour
 {
@@ -9,55 +10,40 @@ public class GameManager : MonoBehaviour
         SaveManager.LoadAll();
     }
 
-    void Start()
+    private void Start()
     {
-        foreach (var data in SaveManager.GetPlacedBuildings())
-        {
-            Debug.Log($"Loading building: itemID={data.itemID}, pos=({data.x},{data.y},{data.z})");
-            InventoryItem item = ItemDatabase.Instance.GetInventoryItemByID(data.itemID);
-            if (item == null)
-            {
-                Debug.LogWarning($"Item not found for itemID: {data.itemID}");
-                continue;
-            }
-            if (item.itemData.buildingPrefab == null)
-            {
-                Debug.LogWarning($"No buildingPrefab for itemID: {data.itemID}");
-                continue;
-            }
-            Vector3 pos = new Vector3(data.x, data.y, data.z);
-            GameObject.Instantiate(item.itemData.buildingPrefab, pos, Quaternion.identity);
-            Debug.Log($"Instantiated buildingPrefab for itemID: {data.itemID} at {pos}");
-        }
-
-        var player = GameObject.FindWithTag("Player");
-        var playerpos = SaveManager.LoadPlayerPosition();
-        if (player != null && playerpos.HasValue)
-        {
-            player.transform.position = playerpos.Value;
-            Debug.Log($"Player position loaded: {playerpos.Value}");
-        }
-
-        
+        LoadGame();
     }
 
     private void OnApplicationQuit()
     {
-        if (!SaveManager.AllowEditorSave)
-        {
-            Debug.LogWarning("Editor save is disabled. Skipping save on application quit.");
-            return;
-        }
+        SaveGame();
+    }
 
-        SaveManager.SavePlacedBuildings();
+    [ContextMenu("SAVE GAME")]
+    private void SaveGame()
+    {
         SaveManager.SaveAll();
+        Debug.Log("Game saved.");
+    }
+
+    [ContextMenu("LOAD GAME")]
+    private void LoadGame()
+    {
+        SaveManager.LoadAll();
+         
+        Debug.Log("Game loaded.");
     }
 
     [ContextMenu("RESET ALL SAVES")]
     private void ResetAllSaves()
     {
         SaveManager.AllowEditorSave = false;
-        PlayerPrefs.DeleteAll();
+        string saveFilePath = Path.Combine(Application.persistentDataPath, "savegame.json");
+        if (File.Exists(saveFilePath))
+        {
+            File.Delete(saveFilePath);
+        }
 #if UNITY_EDITOR
         EditorApplication.isPlaying = false;
 #else
