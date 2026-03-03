@@ -15,7 +15,7 @@ MonoBehaviour:
   itemData:
     itemName: Iron
     itemIcon: {fileID: 4812959854887349160, guid: 15bea5e1cc8fd854ba61ea88b73907e6, type: 3}
-    itemID: 3
+    itemID: 1
     quantity: 0
     maxStackSize: 100
     description: 

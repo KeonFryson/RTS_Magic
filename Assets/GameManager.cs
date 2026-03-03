@@ -9,10 +9,8 @@ public class GameManager : MonoBehaviour
         SaveManager.LoadAll();
     }
 
-
     void Start()
     {
-
         foreach (var data in SaveManager.GetPlacedBuildings())
         {
             Debug.Log($"Loading building: itemID={data.itemID}, pos=({data.x},{data.y},{data.z})");
@@ -31,7 +29,6 @@ public class GameManager : MonoBehaviour
             GameObject.Instantiate(item.itemData.buildingPrefab, pos, Quaternion.identity);
             Debug.Log($"Instantiated buildingPrefab for itemID: {data.itemID} at {pos}");
         }
-       
 
         var player = GameObject.FindWithTag("Player");
         var playerpos = SaveManager.LoadPlayerPosition();
@@ -41,8 +38,7 @@ public class GameManager : MonoBehaviour
             Debug.Log($"Player position loaded: {playerpos.Value}");
         }
 
-        SaveManager.LoadAllStorageBoxes();
-
+        
     }
 
     private void OnApplicationQuit()
@@ -52,19 +48,15 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("Editor save is disabled. Skipping save on application quit.");
             return;
         }
-        
-        SaveManager.SavePlacedBuildings();
-        SaveManager.SaveAllStorageBoxes();
-        SaveManager.SaveAll();
-        
-    }
 
-    // Optionally, call SaveManager.SaveAll() at other times (e.g., on pause, manual save, etc.)
+        SaveManager.SavePlacedBuildings();
+        SaveManager.SaveAll();
+    }
 
     [ContextMenu("RESET ALL SAVES")]
     private void ResetAllSaves()
     {
-        SaveManager.AllowEditorSave = false; // Disable editor save to prevent saving after reset
+        SaveManager.AllowEditorSave = false;
         PlayerPrefs.DeleteAll();
 #if UNITY_EDITOR
         EditorApplication.isPlaying = false;

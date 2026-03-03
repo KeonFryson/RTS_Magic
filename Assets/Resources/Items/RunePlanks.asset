@@ -20,3 +20,7 @@ MonoBehaviour:
     maxStackSize: 99
     description: 
     isConsumable: 0
+    buildingPrefab: {fileID: 0}
+    placementMask:
+      serializedVersion: 2
+      m_Bits: 0

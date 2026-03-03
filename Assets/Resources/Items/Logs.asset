@@ -15,8 +15,12 @@ MonoBehaviour:
   itemData:
     itemName: Logs
     itemIcon: {fileID: -4962880513221496114, guid: f8c4a97b5c8c3b844bebb833eae4b530, type: 3}
-    itemID: 0
+    itemID: 2
     quantity: 1
     maxStackSize: 64
     description: Wood Logs
     isConsumable: 0
+    buildingPrefab: {fileID: 0}
+    placementMask:
+      serializedVersion: 2
+      m_Bits: 0

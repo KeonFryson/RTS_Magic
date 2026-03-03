@@ -15,7 +15,7 @@ MonoBehaviour:
   itemData:
     itemName: Raw Iron
     itemIcon: {fileID: 6942156294097867568, guid: 73641ea6637741a44a3d3a54663b10fc, type: 3}
-    itemID: 2
+    itemID: 3
     quantity: 0
     maxStackSize: 100
     description: 

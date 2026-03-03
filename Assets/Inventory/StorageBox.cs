@@ -1,7 +1,6 @@
 // Assets\Inventory\StorageBox.cs
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [System.Serializable]
 public class StorageSlot
@@ -12,21 +11,16 @@ public class StorageSlot
 public class StorageBox : MonoBehaviour
 {
     public int Capacity = 20;
-    public string boxID;
+    
     [SerializeField]
     private List<StorageSlot> slots = new List<StorageSlot>();
 
     private StorageBoxUI storageBoxUI;
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (string.IsNullOrEmpty(boxID))
-            boxID = System.Guid.NewGuid().ToString();
-    }
-#endif
+    private PlayerInputs playerInputs;
+ 
     private void Awake()
     {
+         
         if (slots.Count != Capacity)
         {
             slots.Clear();
@@ -37,36 +31,46 @@ public class StorageBox : MonoBehaviour
 
     private void Start()
     {
-        // Example: Add some items to the storage box for testing
-       
         storageBoxUI = GetComponentInChildren<StorageBoxUI>();
         if (storageBoxUI != null)
         {
             storageBoxUI.Hide();
         }
+        playerInputs = PlayerInputs.Instance;
+        if (playerInputs != null)
+        {
+            
+            playerInputs.OnClick += HandleClick;
+            playerInputs.OnRightClick += HandleRightClck;
+        }
     }
 
-
-
-    private void Update()
+    private void OnDestroy()
     {
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        if (playerInputs != null)
         {
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-            if (hit.collider != null && hit.collider.gameObject == gameObject)
-            {
-                if (storageBoxUI != null)
-                    storageBoxUI.Show(this);
-                else
-                    Debug.LogWarning("StorageBoxUI component not found in children!");
-            }
+            playerInputs.OnClick -= HandleClick;
+            playerInputs.OnRightClick -= HandleRightClck;
         }
+    }
 
-        if (Keyboard.current.escapeKey.wasPressedThisFrame && storageBoxUI != null && storageBoxUI.gameObject.activeSelf)
+    
+    private void HandleClick(Vector3 worldPos)
+    {
+        Vector2 mouseWorld2D = new Vector2(worldPos.x, worldPos.y);
+        RaycastHit2D hit = Physics2D.Raycast(mouseWorld2D, Vector2.zero);
+        if (hit.collider != null && hit.collider.gameObject == gameObject)
         {
-            storageBoxUI.Hide();
+            if (storageBoxUI != null)
+                storageBoxUI.Show(this);
+            else
+                Debug.LogWarning("StorageBoxUI component not found in children!");
         }
+    }
+    private void HandleRightClck(Vector3 worldPos)
+    {
+        if (storageBoxUI != null)
+            storageBoxUI.Hide();
     }
 
     public bool AddItem(InventoryItem item)
@@ -76,7 +80,6 @@ public class StorageBox : MonoBehaviour
             if (slots[i].item != null && slots[i].item.itemData.itemID == item.itemData.itemID)
             {
                 slots[i].item.itemData.quantity += item.itemData.quantity;
-               // Debug.Log($"[StorageBox] Stacked itemID {item.itemData.itemID}, new quantity: {slots[i].item.itemData.quantity} in box {boxID}");
                 return true;
             }
         }
@@ -97,7 +100,6 @@ public class StorageBox : MonoBehaviour
                     placementMask = item.itemData.placementMask,
                 };
                 slots[i].item = newItem;
-               // Debug.Log($"[StorageBox] Added itemID {item.itemData.itemID}, quantity: {item.itemData.quantity} to slot {i} in box {boxID}");
                 return true;
             }
         }
@@ -106,8 +108,6 @@ public class StorageBox : MonoBehaviour
 
     public bool AddItemByID(int itemId, int amount)
     {
-        
-
         var template = ItemDatabase.Instance != null
             ? ItemDatabase.Instance.GetInventoryItemByID(itemId)
             : null;

@@ -2,8 +2,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-
-
 public class BuildingPlacer : MonoBehaviour
 {
     [Header("Placement Settings")]
@@ -12,6 +10,26 @@ public class BuildingPlacer : MonoBehaviour
     private GameObject previewInstance;
     private InventoryItem selectedBuildingItem;
     private bool isPlacing = false;
+    private PlayerInputs playerInputs;
+
+    private void Start()
+    {
+        playerInputs = PlayerInputs.Instance;
+        if (playerInputs != null)
+        {
+            playerInputs.OnClick += HandleClick;
+            playerInputs.OnRightClick += HandleRightClick;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (playerInputs != null)
+        {
+            playerInputs.OnClick -= HandleClick;
+            playerInputs.OnRightClick -= HandleRightClick;
+        }
+    }
 
     private void Update()
     {
@@ -47,16 +65,25 @@ public class BuildingPlacer : MonoBehaviour
         {
             previewInstance.transform.position = cellCenter;
         }
+    }
 
-        // Placement logic
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+    private void HandleClick(Vector3 worldPos)
+    {
+        if (!isPlacing || selectedBuildingItem == null || selectedBuildingItem.itemData.buildingPrefab == null)
+            return;
+
+        Vector3Int cellPos = WorldGen.Instance.tilemap.WorldToCell(worldPos);
+        Vector3 cellCenter = WorldGen.Instance.tilemap.GetCellCenterWorld(cellPos);
+
+        if (CanPlaceBuilding(cellPos))
         {
-            if (CanPlaceBuilding(cellPos))
-            {
-                PlaceBuilding(cellCenter);
-            }
+            PlaceBuilding(cellCenter);
         }
-        else if (Mouse.current.rightButton.wasPressedThisFrame)
+    }
+
+    private void HandleRightClick(Vector3 worldPos)
+    {
+        if (isPlacing)
         {
             CancelPlacement();
         }
@@ -85,12 +112,7 @@ public class BuildingPlacer : MonoBehaviour
     {
         GameObject placed = Instantiate(selectedBuildingItem.itemData.buildingPrefab, position, Quaternion.identity);
 
-        // Assign a unique boxID if this is a StorageBox
-        var storageBox = placed.GetComponent<StorageBox>();
-        if (storageBox != null)
-        {
-            storageBox.boxID = System.Guid.NewGuid().ToString();
-        }
+        
 
         SaveManager.AddPlacedBuilding(selectedBuildingItem.itemData.itemID, position);
         // Optionally: Remove one building item from inventory

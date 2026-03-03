@@ -18,7 +18,14 @@ public class ItemDatabase : ScriptableObject
     {
         // Loads all InventoryItem assets in Resources/Items (recursively)
         allItems = Resources.LoadAll<InventoryItem>("Items");
-        Debug.Log($"[ItemDatabase] Loaded {allItems.Length} items from Resources/Items.");
+        // Sort by itemID
+        System.Array.Sort(allItems, (a, b) =>
+        {
+            int idA = a != null && a.itemData != null ? a.itemData.itemID : int.MinValue;
+            int idB = b != null && b.itemData != null ? b.itemData.itemID : int.MinValue;
+            return idA.CompareTo(idB);
+        });
+        Debug.Log($"[ItemDatabase] Loaded {allItems.Length} items from Resources/Items (sorted by itemID).");
     }
 
     public InventoryItem GetInventoryItemByID(int id)

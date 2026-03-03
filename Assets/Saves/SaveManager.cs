@@ -8,19 +8,22 @@ public class PlacedBuildingData
     public int itemID;
     public float x, y, z;
 }
+
+ 
 public static class SaveManager
 {
     private const string DestroyedNodesKey = "DestroyedResourceNodes";
     private const string InventoryKey = "PlayerInventory";
     private const string PlacedBuildingsKey = "PlacedBuildings";
     private const string PlayerPosKey = "PlayerPosition";
-    private const string StorageBoxesKey = "StorageBoxes";
+ 
     private static HashSet<Vector2Int> destroyedNodes = new HashSet<Vector2Int>();
     private static List<PlacedBuildingData> placedBuildings = new List<PlacedBuildingData>();
 
     // Control saving in editor
     public static bool AllowEditorSave { get; set; } = false;
 
+   
     // --- Player Position ---
     public static void SavePlayerPosition(Vector3 pos)
     {
@@ -110,13 +113,11 @@ public static class SaveManager
     public static void SaveInventory(InventoryItem[] items)
     {
         var list = new List<string>();
-        int savedCount = 0;
         foreach (var item in items)
         {
             if (item == null || item.itemData == null) continue;
             var data = $"{item.itemData.itemID}|{item.itemData.quantity}";
             list.Add(data);
-            savedCount++;
         }
         PlayerPrefs.SetString(InventoryKey, string.Join(";", list));
     }
@@ -132,7 +133,6 @@ public static class SaveManager
 
         var entries = data.Split(';');
         inventory.ClearInventory();
-        int loadedCount = 0;
         foreach (var entry in entries)
         {
             var parts = entry.Split('|');
@@ -157,7 +157,6 @@ public static class SaveManager
                         placementMask = itemTemplate.itemData.placementMask
                     };
                     inventory.AddItem(item);
-                    loadedCount++;
                 }
                 else
                 {
@@ -172,103 +171,8 @@ public static class SaveManager
         inventory.OnInventoryChanged?.Invoke();
     }
 
-    // Save all storage boxes in the scene
-    public static void SaveAllStorageBoxes()
-    {
-        var allBoxes = GameObject.FindObjectsByType<StorageBox>(FindObjectsSortMode.None);
+    
 
-        var boxDataList = new List<string>();
-        foreach (var box in allBoxes)
-        {
-            var slots = box.GetSlots();
-            //Debug.Log($"[SaveManager] Box {box.boxID} slots before save: " +
-            //    string.Join(", ", slots.Select(s => s.item != null ? $"{s.item.itemData.itemID}:{s.item.itemData.quantity}" : "empty")));
-          
-            var slotData = new List<string>();
-            foreach (var slot in slots)
-            {
-                if (slot.item != null && slot.item.itemData != null && slot.item.itemData.itemID >= 0 && slot.item.itemData.quantity > 0)
-                {
-                    slotData.Add($"{slot.item.itemData.itemID}:{slot.item.itemData.quantity}");
-                }
-                else
-                {
-                    slotData.Add("0:0"); // Empty slot
-                }
-            }
-            // Format: boxID|itemID:qty,itemID:qty,...
-            boxDataList.Add($"{box.boxID}|{string.Join(",", slotData)}");
-        }
-        string saveString = string.Join(";", boxDataList);
-        PlayerPrefs.SetString(StorageBoxesKey, saveString);
-
-        // Debug: Log what is being saved
-        //Debug.Log($"[SaveManager] Saving StorageBoxes: {saveString}");
-    }
-
-    public static void LoadAllStorageBoxes()
-    {
-        var allBoxes = GameObject.FindObjectsByType<StorageBox>(FindObjectsSortMode.None);
-        var data = PlayerPrefs.GetString(StorageBoxesKey, "");
-        Debug.Log($"[SaveManager] Loading StorageBoxes: {data}");
-
-        if (string.IsNullOrEmpty(data))
-        {
-            Debug.Log("[SaveManager] No storage box data found to load.");
-            return;
-        }
-
-        var boxEntries = data.Split(';');
-        foreach (var entry in boxEntries)
-        {
-            var parts = entry.Split('|');
-            if (parts.Length != 2) continue;
-            var boxID = parts[0];
-            var slotEntries = parts[1].Split(',');
-
-            var box = allBoxes.FirstOrDefault(b => b.boxID == boxID);
-            if (box == null)
-            {
-                Debug.LogWarning($"[SaveManager] StorageBox with boxID {boxID} not found in scene.");
-                continue;
-            }
-
-            var slots = box.GetSlots();
-            for (int i = 0; i < slots.Count && i < slotEntries.Length; i++)
-            {
-                var slotData = slotEntries[i].Split(':');
-                if (slotData.Length != 2) continue;
-                if (int.TryParse(slotData[0], out int itemID) && int.TryParse(slotData[1], out int qty))
-                {
-                    if (itemID >= 0 && qty > 0)
-                    {
-                        var template = ItemDatabase.Instance.GetInventoryItemByID(itemID);
-                        if (template != null)
-                        {
-                            InventoryItem item = ScriptableObject.CreateInstance<InventoryItem>();
-                            item.itemData = new ItemData
-                            {
-                                itemID = template.itemData.itemID,
-                                itemName = template.itemData.itemName,
-                                itemIcon = template.itemData.itemIcon,
-                                maxStackSize = template.itemData.maxStackSize,
-                                description = template.itemData.description,
-                                isConsumable = template.itemData.isConsumable,
-                                quantity = qty,
-                                buildingPrefab = template.itemData.buildingPrefab,
-                                placementMask = template.itemData.placementMask
-                            };
-                            slots[i].item = item;
-                        }
-                    }
-                    else
-                    {
-                        slots[i].item = null;
-                    }
-                }
-            }
-        }
-    }
     // --- Save/Load All ---
     public static void SaveAll()
     {
@@ -281,7 +185,7 @@ public static class SaveManager
             SaveInventory(Inventory.Instance.GetItems());
         SavePlacedBuildings();
         SavePlayerPosition(GameObject.FindWithTag("Player").transform.position);
-        SaveAllStorageBoxes();
+       ;
         PlayerPrefs.Save();
     }
 
@@ -293,7 +197,6 @@ public static class SaveManager
         else
             Debug.LogWarning("[SaveManager] Inventory instance not found during LoadAll.");
         LoadPlacedBuildings();
-        
     }
 
     // --- Internal Save/Load for Destroyed Nodes ---
